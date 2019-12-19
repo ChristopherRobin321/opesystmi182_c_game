@@ -71,3 +71,4 @@ int tie = 0;
 	printf("\nscore is user: %d   computer: %d  Tie: %d \n\n\n\n", usrScore, comScore, tie);
 	}
 
+/* https://stackoverflow.com/questions/51351275/broken-for-loop-in-rock-paper-scissors-c */
