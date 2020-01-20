@@ -1,147 +1,104 @@
 #include <stdio.h>
-#include <conio.h>
+#include <stdlib.h>
 
-char square[10] = { 'o', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+int b[3][3]; /* board. 0: blank; -1: computer; 1: human */
 
-int checkwin();
-void board();
+int check_winner()
+{
+	int i;
+	for (i = 0; i < 3; i++) {
+		if (b[i][0] && b[i][1] == b[i][0] && b[i][2] == b[i][0])
+			return b[i][0];
+		if (b[0][i] && b[1][i] == b[0][i] && b[2][i] == b[0][i])
+			return b[0][i];
+	}
+	if (!b[1][1]) return 0;
+
+	if (b[1][1] == b[0][0] && b[2][2] == b[0][0]) return b[0][0];
+	if (b[1][1] == b[2][0] && b[0][2] == b[1][1]) return b[1][1];
+
+	return 0;
+}
+
+void showboard()
+{
+	const char *t = "X O";
+	int i, j;
+	for (i = 0; i < 3; i++, putchar('\n'))
+		for (j = 0; j < 3; j++)
+			printf("%c ", t[ b[i][j] + 1 ]);
+	printf("-----\n");
+}
+
+#define for_ij for (i = 0; i < 3; i++) for (j = 0; j < 3; j++)
+int best_i, best_j;
+int test_move(int val, int depth)
+{
+	int i, j, score;
+	int best = -1, changed = 0;
+
+	if ((score = check_winner())) return (score == val) ? 1 : -1;
+
+	for_ij {
+		if (b[i][j]) continue;
+
+		changed = b[i][j] = val;
+		score = -test_move(-val, depth + 1);
+		b[i][j] = 0;
+
+		if (score <= best) continue;
+		if (!depth) {
+			best_i = i;
+			best_j = j;
+		}
+		best = score;
+	}
+
+	return changed ? best : 0;
+}
+
+const char* game(int user)
+{
+	int i, j, k, move, win = 0;
+	for_ij b[i][j] = 0;
+
+	printf("Board postions are numbered so:\n1 2 3\n4 5 6\n7 8 9\n");
+	printf("You have O, I have X.\n\n");
+	for (k = 0; k < 9; k++, user = !user) {
+		while(user) {
+			printf("your move: ");
+			if (!scanf("%d", &move)) {
+				scanf("%*s");
+				continue;
+			}
+			if (--move < 0 || move >= 9) continue;
+			if (b[i = move / 3][j = move % 3]) continue;
+
+			b[i][j] = 1;
+			break;
+		}
+		if (!user) {
+			if (!k) { /* randomize if computer opens, less boring */
+				best_i = rand() % 3;
+				best_j = rand() % 3;
+			} else
+				test_move(-1, 0);
+
+			b[best_i][best_j] = -1;
+			printf("My move: %d\n", best_i * 3 + best_j + 1);
+		}
+
+		showboard();
+		if ((win = check_winner()))
+			return win == 1 ? "You win.\n\n": "I win.\n\n";
+	}
+	return "A draw.\n\n";
+}
 
 int main()
 {
-    int player = 1, i, choice;
-
-    char mark;
-    do
-    {
-        board();
-        player = (player % 2) ? 1 : 2;
-
-        printf("Player %d, enter a number:  ", player);
-        scanf("%d", &choice);
-
-        mark = (player == 1) ? 'X' : 'O';
-
-        if (choice == 1 && square[1] == '1')
-            square[1] = mark;
-            
-        else if (choice == 2 && square[2] == '2')
-            square[2] = mark;
-            
-        else if (choice == 3 && square[3] == '3')
-            square[3] = mark;
-            
-        else if (choice == 4 && square[4] == '4')
-            square[4] = mark;
-            
-        else if (choice == 5 && square[5] == '5')
-            square[5] = mark;
-            
-        else if (choice == 6 && square[6] == '6')
-            square[6] = mark;
-            
-        else if (choice == 7 && square[7] == '7')
-            square[7] = mark;
-            
-        else if (choice == 8 && square[8] == '8')
-            square[8] = mark;
-            
-        else if (choice == 9 && square[9] == '9')
-            square[9] = mark;
-            
-        else
-        {
-            printf("Invalid move ");
-
-            player--;
-            getch();
-        }
-        i = checkwin();
-
-        player++;
-    }while (i ==  - 1);
-    
-    board();
-    
-    if (i == 1)
-        printf("==>\aPlayer %d win ", --player);
-    else
-        printf("==>\aGame draw");
-
-    getch();
-
-    return 0;
+	int first = 0;
+	while (1) printf("%s", game(first = !first));
+	return 0;
 }
-
-/*********************************************
-
-FUNCTION TO RETURN GAME STATUS
-1 FOR GAME IS OVER WITH RESULT
--1 FOR GAME IS IN PROGRESS
-O GAME IS OVER AND NO RESULT
- **********************************************/
-
-int checkwin()
-{
-    if (square[1] == square[2] && square[2] == square[3])
-        return 1;
-
-    else if (square[4] == square[5] && square[5] == square[6])
-        return 1;
-
-    else if (square[7] == square[8] && square[8] == square[9])
-        return 1;
-
-    else if (square[1] == square[4] && square[4] == square[7])
-        return 1;
-
-    else if (square[2] == square[5] && square[5] == square[8])
-        return 1;
-
-    else if (square[3] == square[6] && square[6] == square[9])
-        return 1;
-
-    else if (square[1] == square[5] && square[5] == square[9])
-        return 1;
-
-    else if (square[3] == square[5] && square[5] == square[7])
-        return 1;
-
-    else if (square[1] != '1' && square[2] != '2' && square[3] != '3' &&
-        square[4] != '4' && square[5] != '5' && square[6] != '6' && square[7] 
-        != '7' && square[8] != '8' && square[9] != '9')
-
-        return 0;
-    else
-        return  - 1;
-}
-
-
-/*******************************************************************
-FUNCTION TO DRAW BOARD OF TIC TAC TOE WITH PLAYERS MARK
- ********************************************************************/
-
-
-void board()
-{
-    system("cls");
-    printf("\n\n\tTic Tac Toe\n\n");
-
-    printf("Player 1 (X)  -  Player 2 (O)\n\n\n");
-
-
-    printf("     |     |     \n");
-    printf("  %c  |  %c  |  %c \n", square[1], square[2], square[3]);
-
-    printf("_____|_____|_____\n");
-    printf("     |     |     \n");
-
-    printf("  %c  |  %c  |  %c \n", square[4], square[5], square[6]);
-
-    printf("_____|_____|_____\n");
-    printf("     |     |     \n");
-
-    printf("  %c  |  %c  |  %c \n", square[7], square[8], square[9]);
-
-    printf("     |     |     \n\n");
-}
-/* copied from: http://www.cprogrammingnotes.com/question/tic-tac-toe-game.html*/
+/* copied from: https://rosettacode.org/wiki/Tic-tac-toe#C */
